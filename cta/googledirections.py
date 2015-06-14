@@ -15,33 +15,34 @@ Usage:
 """
 
 import datetime
-import googlemaps
 import scipy
 
 import citybounds
+import zgoogle
+import ztwitter
 
-from authkeys import GOOGLE_API_KEY
 
-
-#-----------------------#
+# --------------------- #
 #   Module Constants    #
-#-----------------------#
+# --------------------- #
 
 N_BINS = 100
 
 GMAPS = googlemaps.Client(key=GOOGLE_API_KEY)
 
 
-#-------------------------------#
+# ----------------------------- #
 #   Main routine                #
-#-------------------------------#
+# ----------------------------- #
 
-def build_city_grid(city, state, nLat=N_BINS, nLng=N_BINS):
+def build_city_grid(f, city, state, nLat=N_BINS, nLng=N_BINS):
     """ hit up google for the bounding borders of a city, then divide up the
         resulting rectangle into some number of squares
 
     """
-    xMax, xMin, yMax, yMin = citybounds.get_google_bounding_box(
+    key = zgoogle.auth.load_auth_yaml(f)
+    xMax, xMin, yMax, yMin = zgoogle.gmaps.get_google_bounding_box(
+        key=key['api_key'],
         city=city,
         state=state
     )
