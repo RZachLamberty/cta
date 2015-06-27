@@ -1,0 +1,30 @@
+blue:
+  api_code: blue
+  hex: "#0070ff"
+purple_express:
+  api_code: pexp
+  hex: "#a900e6"
+green:
+  api_code: g
+  hex: "#38a800"
+brown:
+  api_code: brn
+  hex: "#895a44"
+orange:
+  api_code: o
+  hex: "#ffaa00"
+purple:
+  api_code: p
+  hex: "#a900e6"
+pink:
+  api_code: pnk
+  hex: "#ff73df"
+yellow:
+  api_code: y
+  hex: "#ffff00"
+red:
+  api_code: red
+  hex: "#ff0000"
+multiple:
+  api_code: mult
+  hex: "#9c9c9c"

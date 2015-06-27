@@ -24,8 +24,9 @@ import scipy
 #   Module Constants    #
 # --------------------- #
 
-FCHICAGO = './chicago_boundaries.csv'
+FCHICAGO = './data/chicago_boundaries.csv'
 NBINS = 100
+
 
 # --------------------- #
 #   boundary functions  #
@@ -57,7 +58,8 @@ def within_boundary(lat, lng, boundary):
 #   grid building       #
 # --------------------- #
 
-def build_grid(f=FCHICAGO, latbins=NBINS, lngbins=NBINS):
+def build_grid(f=FCHICAGO, latbins=NBINS, lngbins=NBINS,
+               allowOutsideBoundary=False):
     """ given a file f which contains (pref csv) data of a city's boundaries,
         and latbins, lngbins, the number of bins we wish to have in each
         direction, return an iterable of (lat, lng) pairs which fall on the bin
@@ -78,7 +80,7 @@ def build_grid(f=FCHICAGO, latbins=NBINS, lngbins=NBINS):
     return pd.DataFrame(
         (
             [lat, lng] for lat in latspace for lng in lngspace
-            if within_boundary(lat, lng, bpoly)
+            if (allowOutsideBoundary) or within_boundary(lat, lng, bpoly)
         ),
         columns=['latitude', 'longitude']
     )

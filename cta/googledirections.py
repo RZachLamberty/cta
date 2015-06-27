@@ -15,46 +15,56 @@ Usage:
 """
 
 import datetime
+import pandas as pd
 import scipy
 
 import citybounds
 import zgoogle
 import ztwitter
 
+from itertools import combinations
+
 
 # --------------------- #
 #   Module Constants    #
 # --------------------- #
-
-N_BINS = 100
-
-GMAPS = googlemaps.Client(key=GOOGLE_API_KEY)
 
 
 # ----------------------------- #
 #   Main routine                #
 # ----------------------------- #
 
-def build_city_grid(f, city, state, nLat=N_BINS, nLng=N_BINS):
-    """ hit up google for the bounding borders of a city, then divide up the
-        resulting rectangle into some number of squares
-
-    """
-    key = zgoogle.auth.load_auth_yaml(f)
-    xMax, xMin, yMax, yMin = zgoogle.gmaps.get_google_bounding_box(
-        key=key['api_key'],
-        city=city,
-        state=state
-    )
-
-    return [
-        {'lat_ind': j, 'lat': lat, 'lng_ind': i, 'lng': lng}
-        for (i, lng) in enumerate(scipy.linspace(start=xMin, stop=xMax, num=nLat))
-        for (j, lat) in enumerate(scipy.linspace(start=yMin, stop=yMax, num=nLng))
-    ]
+def connect(fgoogle):
+    key = zgoogle.auth.load_auth_yaml(fgoogle)['api_key']
+    zgoogle.gmaps.connect(key=key)
 
 
-def duration_from_direction(dirs, mode="transit"):
+def grid_distances(grid, mode='transit', useCache=True):
+    dists = pd.DataFrame(columns=['lat0', 'lng0', 'lat1', 'lng1', 'time'])
+    for ((i, r0), (j, r1)) in combinations(grid.iterrows(), 2):
+        lat0 = r0['latitude']
+        lng0 = r0['longitude']
+        lat1 = r1['latitude']
+        lng1 = r1['longitude']
+        origin = '{},{}'.format(lat0, lng0)
+        destination = '{},{}'.format(lat1, lng1)
+        directions = zgoogle.gmaps.get_gmaps_directions(
+            origin, destination, mode, useCache
+        )
+        time = time_from_direction(directions, mode=mode)
+        dists = dists.append([{
+            'lat0': lat0,
+            'lng0': lng0,
+            'lat1': lat1,
+            'lng1': lng1,
+            'time': time,
+        }])
+    return dists
+
+
+
+
+def time_from_direction(dirs, mode="transit"):
     """ direction dict from google --> minimum distance on public transit """
     try:
         return datetime.timedelta(seconds=dirs[0]['legs'][0]['duration']['value'])
