@@ -86,20 +86,25 @@ def add_isolation_dist_colormap(fig, subplot, isodists, N, **kwargs):
     cbar.ax.set_ylabel('Miles', rotation=270)
 
 
-def main():
+def main(bpath=None, grid=None, orderedstations=None, llines=None, isodists=None):
     import citybounds
     import trains
     import poleofisolation
 
     # getting plot data
-    bpath = citybounds.load_boundary()
-    grid = citybounds.build_grid()
-    stations = trains.lstation_data()
-    stationorder = trains.station_order()
-    trains.add_line_order(stations, stationorder)
-    orderedstations = trains.ordered_stations(stations)
-    llines = trains.load_line_coords()
-    isodists = poleofisolation.isolation_distances(grid, stations)
+    if bpath is None:
+        bpath = citybounds.load_boundary()
+    if grid is None:
+        grid = citybounds.build_grid()
+    if orderedstations is None:
+        stations = trains.lstation_data()
+        stationorder = trains.station_order()
+        trains.add_line_order(stations, stationorder)
+        orderedstations = trains.ordered_stations(stations)
+    if llines is None:
+        llines = trains.load_line_coords()
+    if isodists is None:
+        isodists = poleofisolation.isolation_distances(grid, stations)
 
     # plotting
     f = plt.figure()
@@ -120,7 +125,6 @@ def main():
     s.set_ylabel("latitude")
     s.set_title("Poles of Isolation")
 
-    f.show()
     return f
 
 
