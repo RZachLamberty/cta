@@ -14,8 +14,9 @@ Usage:
 
 """
 
-import matplotlib
+import matplotlib.pyplot as plt
 import scipy
+import seaborn as sns
 
 import config as CONFIG
 
@@ -32,7 +33,9 @@ L_LINE_COLOR_MAPPING = CONFIG.color_codes()
 # ----------------------------- #
 
 def add_boundary(subplot, bpath, **kwargs):
-    subplot.plot(bpath.longitude, bpath.latitude, **kwargs)
+    grouped = bpath.groupby('loop')
+    colors = ['k'] * len(grouped)
+    grouped.plot('longitude', 'latitude', style='k-', legend=False, ax=subplot)
 
 
 def add_gridpoints(subplot, grid, **kwargs):
@@ -74,12 +77,12 @@ def add_isolation_dist_contours(fig, subplot, isodists, N=10, **kwargs):
 
 def add_isolation_dist_colormap(fig, subplot, isodists, N, **kwargs):
     """ filled contour plot of distances to l stations """
-    ipiv = isodists.pivot('longitude', 'latitude')
-    x = ipiv.columns.levels[1].values
+    ipiv = isodists.pivot('longitude', 'latitude', 'shortest_distance')
+    x = ipiv.columns.values
     y = ipiv.index.values
     z = ipiv.values
     xi, yi = scipy.meshgrid(x, y)
-    c = subplot.contourf(yi, xi, z, N, **kwargs)
+    c = subplot.contourf(yi, xi, z, N, cmap=plt.get_cmap('coolwarm_r'), **kwargs)
     cbar = fig.colorbar(c)
     cbar.ax.set_ylabel('Miles', rotation=270)
 
@@ -87,6 +90,7 @@ def add_isolation_dist_colormap(fig, subplot, isodists, N, **kwargs):
 def main():
     import citybounds
     import trains
+    import poleofisolation
 
     # getting plot data
     bpath = citybounds.load_boundary()
@@ -101,10 +105,18 @@ def main():
     # plotting
     f = plt.figure()
     s = f.add_subplot(111)
-    mapplots.add_isolation_dist_colormap(f, s, isodists, N=50)
-    mapplots.add_boundary(s, bpath)
-    mapplots.add_stations(s, orderedstations)
-    mapplots.add_l_lines(s, llines)
+    add_isolation_dist_colormap(f, s, isodists, N=50)
+    add_boundary(s, bpath)
+    add_stations(s, orderedstations)
+    add_l_lines(s, llines)
+
+    # updating the plot
+    latmax = max(bpath.latitude.max(), isodists.latitude.max(), orderedstations.latitude.max())
+    latmin = min(bpath.latitude.min(), isodists.latitude.min(), orderedstations.latitude.min())
+    lngmax = max(bpath.longitude.max(), isodists.longitude.max(), orderedstations.longitude.max())
+    lngmin = min(bpath.longitude.min(), isodists.longitude.min(), orderedstations.longitude.min())
+    plt.xlim((lngmin, lngmax))
+    plt.ylim((latmin, latmax))
     s.set_xlabel("longitude")
     s.set_ylabel("latitude")
     s.set_title("Poles of Isolation")

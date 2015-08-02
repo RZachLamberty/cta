@@ -62,8 +62,6 @@ def grid_distances(grid, mode='transit', useCache=True):
     return dists
 
 
-
-
 def time_from_direction(dirs, mode="transit"):
     """ direction dict from google --> minimum distance on public transit """
     try:

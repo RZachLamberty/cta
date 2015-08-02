@@ -15,24 +15,56 @@ Usage:
 
 """
 
+import csv
 import matplotlib.path as mplpath
+import os
 import pandas as pd
 import scipy
+
+from lxml import etree
+from config import HERE
 
 
 # --------------------- #
 #   Module Constants    #
 # --------------------- #
 
-FCHICAGO = './data/chicago_boundaries.csv'
+FKML = os.path.join(HERE, 'data', 'chicago_boundaries.kml')
+FCSV = os.path.join(HERE, 'data', 'chicago_boundaries.csv')
 NBINS = 100
+CTA_NS = {'cta': 'http://www.opengis.net/kml/2.2'}
 
 
 # --------------------- #
 #   boundary functions  #
 # --------------------- #
 
-def load_boundary(f=FCHICAGO):
+def kml_to_csv(fkml=FKML, fcsv=FCSV):
+    """ load the kml file downloaded from the city of chicago open data portal
+        and turn it into a csv. I just find this much cleaner to work with, in
+        the long run
+
+    """
+    x = etree.parse(fkml)
+    rings = x.xpath(
+        '//cta:MultiGeometry/cta:Polygon/*/*/cta:coordinates',
+        namespaces=CTA_NS
+    )
+
+    output = []
+    for (i, ring) in enumerate(rings):
+        coordpairs = ring.text.split(' ')
+        for cp in coordpairs:
+            lng, lat = cp.split(',')
+            output.append({'loop': i, 'latitude': lat, 'longitude': lng})
+
+    with open(fcsv, 'wb') as f:
+        c = csv.DictWriter(f, fieldnames=['loop', 'latitude', 'longitude'])
+        c.writeheader()
+        c.writerows(output)
+
+
+def load_boundary(f=FCSV):
     """ load the file f, into a scipy array
 
         I have collected the bounding points of the city of Chicago into a
@@ -45,21 +77,22 @@ def load_boundary(f=FCHICAGO):
     return pd.read_csv(f)
 
 
-def path_to_poly(path):
-    return mplpath.Path(path)
+def path_to_polys(path):
+    grouped = path.groupby('loop')
+    f = grouped.first()
+    return grouped.apply(mplpath.Path)
 
 
 def within_boundary(lat, lng, boundary):
     """ determine whether a given lat/lng point is within a boundary """
-    return bool(boundary.contains_point((lat, lng)))
+    return any(path.contains_point((lat, lng)) for path in boundary.values)
 
 
 # --------------------- #
 #   grid building       #
 # --------------------- #
 
-def build_grid(f=FCHICAGO, latbins=NBINS, lngbins=NBINS,
-               allowOutsideBoundary=False):
+def build_grid(f=FCSV, latbins=NBINS, lngbins=NBINS, allowOutsideBoundary=False):
     """ given a file f which contains (pref csv) data of a city's boundaries,
         and latbins, lngbins, the number of bins we wish to have in each
         direction, return an iterable of (lat, lng) pairs which fall on the bin
@@ -67,7 +100,7 @@ def build_grid(f=FCHICAGO, latbins=NBINS, lngbins=NBINS,
 
     """
     bpath = load_boundary(f)
-    bpoly = path_to_poly(bpath)
+    bpoly = path_to_polys(bpath)
 
     latmax = bpath.latitude.max()
     latmin = bpath.latitude.min()

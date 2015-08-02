@@ -15,6 +15,7 @@ Usage:
 """
 
 import matplotlib.pyplot as plt
+import os
 import scipy
 
 import citybounds
@@ -27,59 +28,58 @@ import mapplots
 #   Module Constants    #
 # --------------------- #
 
-
 # --------------------- #
 #   Main routine        #
 # --------------------- #
 
 def isolation_distances(grid, stations):
     isodists = grid.copy()
-    isodists['shortest_distance'] = grid.apply(
-        func=lambda row: min_distance_to_l(
-            row.latitude, row.longitude, stations
-        )[0],
-        axis=1
+
+    isodists.loc[:, 'rlatitude'] = isodists.latitude * scipy.pi / 180
+    isodists.loc[:, 'rlongitude'] = isodists.longitude * scipy.pi / 180
+
+    stations.loc[:, 'rlatitude'] = stations.latitude * scipy.pi / 180
+    stations.loc[:, 'rlongitude'] = stations.longitude * scipy.pi / 180
+
+    i = isodists[['rlatitude', 'rlongitude']]
+    statLatLngRad = stations[['rlatitude', 'rlongitude']]
+
+    isodists.loc[:, 'shortest_distance'] = i.apply(
+        func=min_distance_to_l,
+        axis=1,
+        statLatLngRad=statLatLngRad,
+        returnImin=False,
     )
     return isodists
 
 
-def min_distance_to_l(lat, lng, stations):
+def min_distance_to_l(row, statLatLngRad, returnImin=False):
     """ calculate the nearest station to pt (lat, lng) """
-    dists = distance_to_stations(lat, lng, stations)
-    imin = dists.idxmin()
+    dists = distance_to_stations(row, statLatLngRad)
+    imin = dists.argmin()
     d = dists[imin]
-    s = stations.loc[imin]
-    return d, s
+    if returnImin:
+        return d, imin
+    else:
+        return d
 
 
-def distance_to_stations(lat, lng, stations):
-    # convert degrees to radians
-    rlat = deg_to_rad(lat)
-    rlng = deg_to_rad(lng)
-
-    stations['rlatitude'] = stations.latitude.apply(func=deg_to_rad)
-    stations['rlongitude'] = stations.longitude.apply(func=deg_to_rad)
-
-    return stations.apply(
-        func=lambda row: lat_lng_dist(rlat, rlng, row.rlatitude, row.rlongitude),
-        axis=1
-    )
-
-
-def deg_to_rad(d):
-    return d * scipy.pi / 180
-
-
-def lat_lng_dist(rlat0, rlng0, rlat1, rlng1, R=config.R_IMP):
+def distance_to_stations(row, statLatLngRad, R=config.R_IMP):
     """ haversine formula for calculating distances between lat/lng pts
         (must be in radians)!
 
     """
-    delLat = rlat1 - rlat0
-    delLng = rlng1 - rlng0
-    a = (
-        (scipy.sin(delLat / 2)) ** 2.
-        + (scipy.cos(rlat0)) * (scipy.cos(rlat1)) * (scipy.sin(delLng / 2)) ** 2.
+    delta = statLatLngRad - row
+
+    a =(
+        scipy.sin(delta.rlatitude / 2) ** 2.
+        + (
+            scipy.cos(row.rlatitude)
+            * scipy.cos(statLatLngRad.rlatitude)
+            * (scipy.sin(delta.rlongitude / 2) ** 2.)
+        )
     )
+
     c = 2 * scipy.arctan2(scipy.sqrt(a), scipy.sqrt(1 - a))
+
     return R * c

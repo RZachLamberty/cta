@@ -14,6 +14,7 @@ Usage:
 
 """
 
+import os
 import yaml
 
 
@@ -21,7 +22,8 @@ import yaml
 #   Module Constants    #
 # --------------------- #
 
-COLORYAML = './config/line_colors.yaml'
+HERE = os.path.dirname(os.path.realpath(__file__))
+COLORYAML = os.path.join(HERE, 'config', 'line_colors.yaml')
 R_METRIC = 6378.1  # km
 R_IMP = 3963.1676  # miles
 

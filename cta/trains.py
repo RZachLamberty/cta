@@ -15,12 +15,13 @@ Usage:
 """
 
 import lxml.etree as etree
+import os
 import pandas as pd
 import requests
 import yaml
 
 from collections import defaultdict
-
+from config import HERE
 
 # ----------------------------- #
 #   Module Constants            #
@@ -28,9 +29,9 @@ from collections import defaultdict
 
 L_URL = "https://data.cityofchicago.org/resource/8pix-ypme.json"
 COLORS = ['blue', 'brn', 'g', 'o', 'p', 'pexp', 'pnk', 'red', 'y']
-F_STATION_ORDER = './data/l_station_order.yaml'
-F_LINES_KML = './data/CTARailLines.kml'
-F_STATION_KML = './data/CTARailStations.kml'
+F_STATION_ORDER = os.path.join(HERE, 'data', 'l_station_order.yaml')
+F_LINES_KML = os.path.join(HERE, 'data', 'CTARailLines.kml')
+F_STATION_KML = os.path.join(HERE, 'data', 'CTARailStations.kml')
 NS = {'k': 'http://www.opengis.net/kml/2.2'}
 
 
