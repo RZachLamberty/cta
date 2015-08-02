@@ -27,4 +27,4 @@ I am working on making this in to an actual conda package out on anaconda.org, s
 
 
 ## Working with the data
-I think the associated jupyter notebook is the best place to go for that, so check it out!
+I think the [associated jupyter notebook](https://github.com/RZachLamberty/cta/blob/master/cta_demo.ipynb) is the best place to go for that, so check it out!
