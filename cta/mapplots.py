@@ -34,7 +34,6 @@ L_LINE_COLOR_MAPPING = CONFIG.color_codes()
 
 def add_boundary(subplot, bpath, **kwargs):
     grouped = bpath.groupby('loop')
-    colors = ['k'] * len(grouped)
     grouped.plot('longitude', 'latitude', style='k-', legend=False, ax=subplot)
 
 

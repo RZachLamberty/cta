@@ -161,7 +161,7 @@ def add_line_order(stations, stationorder):
         list as a column in the dataframe
 
     """
-    stations['line_order'] = stations.apply(
+    stations.loc[:, 'line_order'] = stations.apply(
         func=lambda row: stationorder[row.color].index(
             row.station_descriptive_name
         ),
